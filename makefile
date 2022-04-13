@@ -70,7 +70,7 @@ FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = conveyor
+TARGET = int
 
 
 # Object files directory
