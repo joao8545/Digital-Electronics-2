@@ -41,7 +41,7 @@
 
 
 # MCU name
-MCU = atmega328p
+MCU = atmega128
 
 
 # Processor frequency.
@@ -70,7 +70,7 @@ FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = blink_led
+TARGET = conveyor
 
 
 # Object files directory
