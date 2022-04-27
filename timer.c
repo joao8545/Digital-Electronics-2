@@ -21,6 +21,11 @@ PORTB=~PORTB;
 }
 
 }
+
+
+
+
+
 int main(){
 DDRB|=(1<<PB5);
 TCCR0=(1<<CS00)|(1<<CS01)|(1<<CS02);

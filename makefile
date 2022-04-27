@@ -70,7 +70,7 @@ FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = timer
+TARGET = usart
 
 
 # Object files directory
