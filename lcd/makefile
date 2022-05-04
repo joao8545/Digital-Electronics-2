@@ -41,8 +41,8 @@
 
 
 # MCU name
+#MCU = at90can128
 MCU = atmega128
-
 
 # Processor frequency.
 #     This will define a symbol, F_CPU, in all source code files equal to the 
@@ -56,13 +56,13 @@ MCU = atmega128
 #         F_CPU =  3686400
 #         F_CPU =  4000000
 #         F_CPU =  7372800
-#         F_CPU =  8000000
+         F_CPU =  8000000
 #         F_CPU = 11059200
 #         F_CPU = 14745600
 #         F_CPU = 16000000
 #         F_CPU = 18432000
 #         F_CPU = 20000000
-F_CPU = 8000000
+#F_CPU = 1000000
 
 
 # Output format. (can be srec, ihex, binary)
@@ -70,7 +70,7 @@ FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = usart_r
+TARGET = LCD_hello
 
 
 # Object files directory
@@ -80,7 +80,7 @@ OBJDIR = .
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c
+SRC = $(TARGET).c lcd.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -127,10 +127,6 @@ CSTANDARD = -std=gnu99
 
 # Place -D or -U options here for C sources
 CDEFS = -DF_CPU=$(F_CPU)UL
-
-
-# Place -D or -U options here for ASM sources
-ADEFS = -DF_CPU=$(F_CPU)
 
 
 # Place -D or -U options here for C++ sources
@@ -182,7 +178,7 @@ CPPFLAGS += -fpack-struct
 CPPFLAGS += -fshort-enums
 CPPFLAGS += -fno-exceptions
 CPPFLAGS += -Wall
-CPPFLAGS += -Wundef
+CFLAGS += -Wundef
 #CPPFLAGS += -mshort-calls
 #CPPFLAGS += -fno-unit-at-a-time
 #CPPFLAGS += -Wstrict-prototypes
@@ -195,14 +191,14 @@ CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 
 #---------------- Assembler Options ----------------
 #  -Wa,...:   tell GCC to pass this to the assembler.
-#  -adhlns:   create listing
+#  -ahlms:    create listing
 #  -gstabs:   have the assembler create line number information; note that
 #             for use in COFF files, additional information about filenames
 #             and function names needs to be present in the assembler source
 #             files -- see avr-libc docs [FIXME: not yet described there]
 #  -listing-cont-lines: Sets the maximum number of continuation lines of hex 
 #       dump that will be displayed for a given single line of source input.
-ASFLAGS = $(ADEFS) -Wa,-adhlns=$(<:%.S=$(OBJDIR)/%.lst),-gstabs,--listing-cont-lines=100
+ASFLAGS = -Wa,-adhlns=$(<:.S=$(OBJDIR)/%.lst),-gstabs,--listing-cont-lines=100
 
 
 #---------------- Library Options ----------------
@@ -269,7 +265,9 @@ LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
 
 #---------------- Programming Options (avrdude) ----------------
 
-# Programming hardware
+# Programming hardware: alf avr910 avrisp bascom bsd 
+# dt006 pavr picoweb pony-stk200 sp12 stk200 stk500
+#
 # Type: avrdude -c ?
 # to get a full listing.
 #
@@ -426,7 +424,7 @@ end:
 
 # Display size of file.
 HEXSIZE = $(SIZE) --target=$(FORMAT) $(TARGET).hex
-ELFSIZE = $(SIZE) --mcu=$(MCU) --format=avr $(TARGET).elf
+ELFSIZE = $(SIZE) --format=avr $(TARGET).elf
 
 sizebefore:
 	@if test -f $(TARGET).elf; then echo; echo $(MSG_SIZE_BEFORE); $(ELFSIZE); \
@@ -506,7 +504,7 @@ extcoff: $(TARGET).elf
 %.hex: %.elf
 	@echo
 	@echo $(MSG_FLASH) $@
-	$(OBJCOPY) -O $(FORMAT) -R .eeprom -R .fuse -R .lock $< $@
+	$(OBJCOPY) -O $(FORMAT) -R .eeprom $< $@
 
 %.eep: %.elf
 	@echo
@@ -518,7 +516,7 @@ extcoff: $(TARGET).elf
 %.lss: %.elf
 	@echo
 	@echo $(MSG_EXTENDED_LISTING) $@
-	$(OBJDUMP) -h -S -z $< > $@
+	$(OBJDUMP) -h -S $< > $@
 
 # Create a symbol table from ELF output file.
 %.sym: %.elf

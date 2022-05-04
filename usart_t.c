@@ -2,7 +2,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-#define FOSC 8000000// Clock Speed
+#define FOSC 1843200// Clock Speed
 #define BAUD 9600
 #define MYUBRR FOSC/16/BAUD-1
 
