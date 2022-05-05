@@ -70,7 +70,7 @@ FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = LCD_hello
+TARGET = LCD_game
 
 
 # Object files directory
