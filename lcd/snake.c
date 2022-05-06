@@ -10,6 +10,7 @@
 
 
 #include <avr/io.h> 
+#include <avr/interrupt.h> 
 #include <util/delay.h> 
 #include <avr/sleep.h>
 #include "lcd.h"
@@ -43,12 +44,33 @@ int snake[16*4];
 int headPos,tailPos;
 int isEndGame=0,isTargetOK=1;
 int val[5];
+volatile char dir='r';
 
 int rows[4]={0x80,0xC0,0x90,0xD0};
 
 void lcd4_ram(unsigned char p);
 unsigned char EEPROM_read(unsigned int uiAddress);
 void EEPROM_write(unsigned int uiAddress, unsigned char ucData);
+
+ISR(INT4_vect){
+	dir='l';
+
+}
+ISR(INT5_vect){
+	dir='r';
+
+}
+ISR(INT6_vect){
+	dir='u';
+
+}
+ISR(INT7_vect){
+	dir='d';
+	//PORTC = numbers[5];
+}
+
+
+
 void createTarget(){
 	
 	while(1){
@@ -97,7 +119,9 @@ void createPlayer(){
 void initMCU(){
 	DDRC = 0xFF;
 	DDRA = 0xFF;
-	DDRE &= ~((1<<DDE4) | (1<<DDE5) | (1<<DDE6) | (1<<DDE7));
+	//DDRE &= ~((1<<DDE4) | (1<<DDE5) | (1<<DDE6) | (1<<DDE7));
+	EIMSK |= ((1<<INT4)|(1<<INT5)|(1<<INT6)|(1<<INT7));
+	//EICRB &=~((1<<ISC71)|(1<<ISC70)|(1<<ISC61)|(1<<ISC60));
 
  
 	PORTA = 0xC0; 
@@ -123,6 +147,7 @@ void initMCU(){
 	srand(EEARL);
 	createTarget();
 	PORTC = numbers[0];
+	sei();
 	
 
 }
@@ -219,45 +244,41 @@ void endGame(){
 }
 int main(void){
 	initMCU(); 
-	char dir='r';
+	
 
   for(;;){
 		
-		if(((PINE&(1<<LEFT_BTN))==0)|| dir=='l'){
-			_delay_ms(DBOUNCETIME);
-			if((snake[0] & 0x0F)==0x00) //if pos is on first column
+		if(dir=='l'){
+			if((snake[0] & 0x0F)==0x00) 
 				newPos=(snake[0] & 0xF0)+0x0F;
 			else
 				newPos=(snake[0] & 0xFF)-0x01;
-			dir='l';
 		
 		}
 		
-		if(((PINE&(1<<RIGHT_BTN))==0)|| dir=='r'){
-			_delay_ms(DBOUNCETIME);
-			if((snake[0] & 0x0F)==0x0F) //if pos is on last column
+		else if(dir=='r'){
+			
+			if((snake[0] & 0x0F)==0x0F) 
 				newPos=(snake[0] & 0xF0)+0x00;
 			else
 				newPos=(snake[0] & 0xFF)+0x01;
-			dir='r';
+			
 		}
 		
-		if(((PINE&(1<<DOWN_BTN))==0)|| dir=='d'){
-			_delay_ms(DBOUNCETIME);
+		else if( dir=='d'){
 			rowIndex++;
 			if (rowIndex>=4)
 				rowIndex=0;
 			newPos=(snake[0] & 0x0F)+rows[rowIndex];
-			dir='d';
+			
 		}
 		
-		if(((PINE&(1<<UP_BTN))==0)|| dir=='u'){
-			_delay_ms(DBOUNCETIME);
+		else if( dir=='u'){
 			rowIndex--;
 			if (rowIndex<0)
 				rowIndex=3;
 			newPos=(snake[0] & 0x0F)+rows[rowIndex];
-			dir='u';
+			
 		
 		}
 		
