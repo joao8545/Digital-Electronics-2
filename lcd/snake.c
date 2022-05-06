@@ -24,6 +24,12 @@
 
 #define DBOUNCETIME 25
 
+
+//todo improve auto scrolling
+//todo add high score
+
+
+
 int oldPos=128,newPos=128, targetPos,scoreCounter=1,rowIndex=0, snakeSize=1;
 int numbers[16] ={~237,~72,~103,~110,~202,~174,~175,~104,~239,~238,~235,~143,~165,~79,~167,~163};
 char endGame1[16]={'C','O','N','G','R','A','T','U','L','A','T','I','O','N','S','!'};
@@ -31,23 +37,39 @@ char endGame2[16]={' ',' ',' ',' ','Y','O','U',' ',' ','W','O','N',' ',' ',' ','
 int playerPattern[8]={0x0E,0x0E,0x04,0x0E,0x15,0x04,0x0A,0x11};
 int snake[16*4];
 int headPos,tailPos;
-int isEndGame=0;
+int isEndGame=0,isTargetOK=1;
 
 int rows[4]={0x80,0xC0,0x90,0xD0};
 
 void lcd4_ram(unsigned char p);
 void createTarget(){
 	
-	targetPos = rand() & 0xFF;
+	while(1){
+		isTargetOK=1;
+		targetPos = rand() & 0xFF;
+		if ((targetPos & 0xF0)<=0x80){
+			targetPos=(targetPos & 0x0F)+0x80;
+		}
+		else if ((targetPos & 0xF0)<=0x90){
+			targetPos=(targetPos & 0x0F)+0x90;
+		}
+		else if ((targetPos & 0xF0)<=0xC0){
+			targetPos=(targetPos & 0x0F)+0xC0;
+		}
+		else {
+			targetPos=(targetPos & 0x0F)+0xD0;
+		}
+		for(int i=0;i<snakeSize;i++){
+			if(targetPos==snake[i]){
+				isTargetOK=0;
+			}
+		}
+		if(isTargetOK==1)
+			break;
+	}
 	
-	if ((targetPos & 0xF0)>0x80)
-		targetPos=(targetPos & 0x0F)+0xC0;
-	else
-		targetPos=(targetPos & 0x0F)+0x80;
-		
-	if ((targetPos & 0x0F)==(oldPos & 0x0F))
-		targetPos=(targetPos & 0xF0)+(~(targetPos & 0x0F));
-		
+	
+	
 	lcd4_com(targetPos);
 	lcd4_dat(TARGET);
 
@@ -163,45 +185,45 @@ void endGame(){
 }
 int main(void){
 	initMCU(); 
-	int dir;
+	char dir;
 
   for(;;){
 		
-		if((PINE&(1<<LEFT_BTN))==0){
+		if(((PINE&(1<<LEFT_BTN))==0)|| dir=='l'){
 			_delay_ms(DBOUNCETIME);
 			if((snake[0] & 0x0F)==0x00) //if pos is on first column
 				newPos=(snake[0] & 0xF0)+0x0F;
 			else
 				newPos=(snake[0] & 0xFF)-0x01;
-			
+			dir='l';
 		
 		}
 		
-		if((PINE&(1<<RIGHT_BTN))==0){
+		if(((PINE&(1<<RIGHT_BTN))==0)|| dir=='r'){
 			_delay_ms(DBOUNCETIME);
 			if((snake[0] & 0x0F)==0x0F) //if pos is on last column
 				newPos=(snake[0] & 0xF0)+0x00;
 			else
 				newPos=(snake[0] & 0xFF)+0x01;
-		
+			dir='r';
 		}
 		
-		if((PINE&(1<<DOWN_BTN))==0){
+		if(((PINE&(1<<DOWN_BTN))==0)|| dir=='d'){
 			_delay_ms(DBOUNCETIME);
 			rowIndex++;
 			if (rowIndex>=4)
 				rowIndex=0;
 			newPos=(snake[0] & 0x0F)+rows[rowIndex];
-			
+			dir='d';
 		}
 		
-		if((PINE&(1<<UP_BTN))==0){
+		if(((PINE&(1<<UP_BTN))==0)|| dir=='u'){
 			_delay_ms(DBOUNCETIME);
 			rowIndex--;
 			if (rowIndex<0)
 				rowIndex=3;
 			newPos=(snake[0] & 0x0F)+rows[rowIndex];
-			
+			dir='u';
 		
 		}
 		
