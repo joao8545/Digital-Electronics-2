@@ -26,7 +26,9 @@
 
 
 //todo improve auto scrolling
-//todo add high score
+//todo fix bug of biting the tail
+//todo improve randomness
+//todo improve end screen
 
 
 
@@ -34,14 +36,19 @@ int oldPos=128,newPos=128, targetPos,scoreCounter=1,rowIndex=0, snakeSize=1;
 int numbers[16] ={~237,~72,~103,~110,~202,~174,~175,~104,~239,~238,~235,~143,~165,~79,~167,~163};
 char endGame1[16]={'C','O','N','G','R','A','T','U','L','A','T','I','O','N','S','!'};
 char endGame2[16]={' ',' ',' ',' ','Y','O','U',' ',' ','W','O','N',' ',' ',' ',' '};
+char endGame3[16]={'H','I','G','H',' ','S','C','O','R','E',':',' ',' ',' ',' ',' '};
+char endGame4[16]={'Y','O','U','R',' ','S','C','O','R','E',':',' ',' ',' ',' ',' '};
 int playerPattern[8]={0x0E,0x0E,0x04,0x0E,0x15,0x04,0x0A,0x11};
 int snake[16*4];
 int headPos,tailPos;
 int isEndGame=0,isTargetOK=1;
+int val[5];
 
 int rows[4]={0x80,0xC0,0x90,0xD0};
 
 void lcd4_ram(unsigned char p);
+unsigned char EEPROM_read(unsigned int uiAddress);
+void EEPROM_write(unsigned int uiAddress, unsigned char ucData);
 void createTarget(){
 	
 	while(1){
@@ -113,7 +120,7 @@ void initMCU(){
 	lcd4_dat(PLAYER); 	// instantiate the player
 	PORTC = numbers[1];
 	
-	srand(TCNT0);
+	srand(EEARL);
 	createTarget();
 	PORTC = numbers[0];
 	
@@ -171,6 +178,13 @@ void updateLCD(int _newPos){
 
 
 void endGame(){
+	int highScore;
+	highScore=EEPROM_read(0x00);
+	if (highScore==0xFF)
+		highScore=0;
+	if(scoreCounter-1>highScore){
+		EEPROM_write(0x00,((scoreCounter-1) &0xFF));
+	}
 	lcd4_com(0x01);
 	lcd4_com(0x80);
 	for(int i=0; i<16;i++){  
@@ -180,12 +194,32 @@ void endGame(){
 	for(int i=0; i<16;i++){  
   lcd4_dat(endGame2[i]);
   }
+	lcd4_com(0x90);
+	for(int i=0; i<11;i++){  
+  lcd4_dat(endGame3[i]);
+  }
+	lcd4_com(0x9E);
+	sprintf(val,"%d",highScore);
+	lcd4_dat(val[0]);
+	lcd4_dat(val[1]);
+	lcd4_dat(val[3]);
+	
+	lcd4_com(0xD0);
+	for(int i=0; i<11;i++){  
+  lcd4_dat(endGame4[i]);
+  }
+	lcd4_com(0xDE);
+	sprintf(val,"%d",scoreCounter-1);
+	lcd4_dat(val[0]);
+	lcd4_dat(val[1]);
+	lcd4_dat(val[3]);
+	
 	
 
 }
 int main(void){
 	initMCU(); 
-	char dir;
+	char dir='r';
 
   for(;;){
 		
@@ -272,4 +306,28 @@ void lcd4_ram(unsigned char p){
   _delay_ms(5 * TIME); //A kijelzo-utasitas vegrehajtasi idonek megadasa
 	PORTA &= ~_BV(RS); //RS = 0 jel
 
+}
+
+void EEPROM_write(unsigned int uiAddress, unsigned char ucData){
+/* Wait for completion of previous write */
+while(EECR & (1<<EEWE))
+;
+/* Set up address and data registers */
+EEAR = uiAddress;
+EEDR = ucData;
+/* Write logical one to EEMWE */
+EECR |= (1<<EEMWE);
+/* Start eeprom write by setting EEWE */
+EECR |= (1<<EEWE);
+}
+unsigned char EEPROM_read(unsigned int uiAddress){
+/* Wait for completion of previous write */
+while(EECR & (1<<EEWE))
+;
+/* Set up address register */
+EEAR = uiAddress;
+/* Start eeprom read by writing EERE */
+EECR |= (1<<EERE);
+/* Return data from data register */
+return EEDR;
 }
